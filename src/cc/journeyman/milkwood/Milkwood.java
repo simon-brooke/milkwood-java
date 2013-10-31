@@ -20,6 +20,10 @@ import java.io.OutputStream;
  * @author Simon Brooke <simon@journeyman.cc>
  */
 public class Milkwood {
+	/**
+	 * The magic token which is deemed to end sentences.
+	 */
+	public static final String PERIOD = ".";
 
 	/**
 	 * Parse command line arguments and kick off the process. Expected arguments
@@ -46,6 +50,7 @@ public class Milkwood {
 	 */
 	public static void main(String[] args) throws FileNotFoundException,
 			IOException {
+		/* defaults */
 		InputStream in = System.in;
 		OutputStream out = System.out;
 		int tupleLength = 2;
@@ -76,8 +81,11 @@ public class Milkwood {
 				}
 			}
 		}
-
-		new Milkwood().readAndGenerate(in, out, tupleLength, debug);
+		try {
+			new Milkwood().readAndGenerate(in, out, tupleLength, debug);
+		} finally {
+			out.close();
+		}
 	}
 
 	/**
@@ -99,13 +107,71 @@ public class Milkwood {
 			final int tupleLength, boolean debug) throws IOException {
 		/* The root of the rule tree I shall build. */
 		RuleTreeNode root = new RuleTreeNode();
+		int length = read(in, tupleLength, debug, root);
+
+		WordSequence tokens = compose(tupleLength, debug, root, length);
+
+		write(out, debug, tokens);
+	}
+
+	/**
+	 * Digest the input into a set of rules.
+	 * 
+	 * @param in
+	 *            the input stream.
+	 * @param tupleLength
+	 *            the length of tuples we shall consider.
+	 * @param debug
+	 *            whether or not to print debugging output.
+	 * @param root
+	 *            the root of the rule tree.
+	 * @return the number of tokens read.
+	 * @throws IOException
+	 *             if the file system buggers up, which is not, in the cosmic
+	 *             scheme of things, very likely.
+	 */
+	private int read(final InputStream in, final int tupleLength,
+			boolean debug, RuleTreeNode root) throws IOException {
 		int length = new Digester().read(in, tupleLength, root);
 
 		if (debug) {
 			System.err.println(root.toString());
 		}
+		return length;
+	}
 
-		new TextGenerator().generate(out, tupleLength, root, length);
+	private WordSequence compose(final int tupleLength, boolean debug,
+			RuleTreeNode root, int length) {
+		WordSequence tokens = new Composer(debug).compose(root, tupleLength,
+				length);
+
+		if (tokens.contains(PERIOD)) {
+			tokens = tokens.truncateAtLastInstance(PERIOD);
+		}
+		return tokens;
+	}
+
+	/**
+	 * Write this sequence of tokens to this output.
+	 * 
+	 * @param out
+	 *            the stream to which to write.
+	 * @param debug
+	 *            whether or not to print debugging output.
+	 * @param tokens
+	 *            the sequence of tokens to write.
+	 * @throws IOException
+	 *             if the file system buggers up, which is not, in the cosmic
+	 *             scheme of things, very likely.
+	 */
+	private void write(final OutputStream out, boolean debug,
+			WordSequence tokens) throws IOException {
+		Writer scrivenor = new Writer(out, debug);
+		try {
+			scrivenor.generate(tokens);
+		} finally {
+			scrivenor.close();
+		}
 	}
 
 }

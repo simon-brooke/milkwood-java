@@ -74,3 +74,6 @@ New Git repository, and this time pushed out to Goldsmith, so that local power p
 
 Decluttered the TextGenerator class by moving the whole read stage into two new classes, Generator and Tokeniser. More declutter needed.
 
+Right, fully decluttered, All bugs(!) are in new class Composer. I have a little Liszt...
+
+
