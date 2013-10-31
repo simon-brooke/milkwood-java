@@ -23,6 +23,10 @@ import java.util.Stack;
  * @author Simon Brooke <simon@journeyman.cc>
  */
 public class RuleTreeNode {
+	/**
+	 * The magic token which identifies the root node of a rule tree.
+	 */
+	public static final String ROOTMAGICTOKEN = "*ROOT*";
     /**
      * The line separator on this platform.
      */
@@ -41,6 +45,13 @@ public class RuleTreeNode {
      * Potential successors of this node
      */
     private Map<String,RuleTreeNode> rules = new HashMap<String,RuleTreeNode>();
+    
+    /**
+     * If no argument passed, generate a root node.
+     */
+    public RuleTreeNode() {
+    	this( RuleTreeNode.ROOTMAGICTOKEN);
+    }
 
     /**
      * Create me wrapping this word.
