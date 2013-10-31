@@ -35,17 +35,16 @@ public class Composer {
         Window preamble = composePreamble(rules);
         WordSequence result = new WordSequence();
 
-        // composing the preamble will have ended with *ROOT* on top of the
-        // stack;
-        // get rid of it.
+        /* composing the preamble will have ended with *ROOT* on top of the
+         * stack; get rid of it. */
         preamble.pop();
-
-        if (debug) {
-            System.err.println("Preamble: " + preamble);
-        }
 
         Window copy = preamble.duplicate();
         Collections.reverse(copy);
+        if (debug) {
+            System.err.println("Preamble: " + copy);
+        }
+
         result.addAll(copy);
 
         result.addAll(this.compose(preamble, rules, length));

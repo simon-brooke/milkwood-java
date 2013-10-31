@@ -87,9 +87,7 @@ class Writer extends BufferedWriter {
 
         this.maybeParagraph(token);
 
-        return (token.endsWith(Milkwood.PERIOD) || 
-                token.equals("?") || 
-                token.endsWith("!"));
+        return (endOfSentence(token));
     }
 
     /**
@@ -144,19 +142,32 @@ class Writer extends BufferedWriter {
 
     /**
      * If this token is an end-of-sentence token, then, on one chance in some,
-     * have the writer write two new lines. NOTE: The tokeniser is treating
-     * PERIOD ('.') as a word character, even though it has not been told to.
-     * Token.endsWith( PERIOD) is a hack to get round this problem. TODO:
-     * investigate and fix.
+     * have the writer write two new lines.
      *
      * @param token a token
      * @throws IOException if Mr this has run out of ink
      */
     private void maybeParagraph(String token) throws IOException {
-        if (token.endsWith(Milkwood.PERIOD)
+        if (this.endOfSentence(token)
                 && RANDOM.nextInt(AVSENTENCESPERPARA) == 0) {
             this.write(NEWLINE);
             this.write(NEWLINE);
         }
+    }
+
+    /**
+     * Does this token mark the end of a sentence? NOTE: The tokeniser is
+     * treating PERIOD ('.') as a word character, even though it has not been
+     * told to. Token.endsWith( PERIOD) is a hack to get round this problem.
+     * TODO: investigate and fix.
+     *
+     * @param token a token.
+     * @return True if in conventional orthography this token should mark the
+     * end of a sentence, else false.
+     */
+    private boolean endOfSentence(String token) {
+        return token.endsWith(Milkwood.PERIOD)
+                || token.equals("?")
+                || token.endsWith("!");
     }
 }
