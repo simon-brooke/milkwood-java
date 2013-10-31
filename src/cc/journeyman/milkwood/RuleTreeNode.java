@@ -170,7 +170,7 @@ public class RuleTreeNode {
             final RuleTreeNode successor = this.getRule(path.pop());
             
             if (successor == null) {
-                throw new NoSuchPathException();
+                result = null;
             } else {
                 result = successor.getWord(path);
             }
@@ -178,4 +178,27 @@ public class RuleTreeNode {
         
         return result;
     }
+
+    /**
+     * Find all the terminal strings in the current rule set which would match this path.
+     * @param path the path to match
+     * @return a collection (possibly empty) of potential successors.
+     */
+	public Collection<String> match(WordStack path) {
+		final Collection<String> result;
+		
+        if ( path.isEmpty()) {
+            result = this.getSuccessors();
+        } else {
+            final RuleTreeNode successor = this.getRule(path.pop());
+            
+            if (successor == null) {
+                result = new ArrayList<String>();
+            } else {
+                result = successor.match(path);
+            }
+        }
+		
+		return result;
+	}
 }

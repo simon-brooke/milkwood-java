@@ -14,6 +14,8 @@ import java.util.Locale;
 import java.util.Random;
 
 /**
+ * A special purpose writer to write sequences of tokens, chopping them up into
+ * paragraphs on the fly..
  * 
  * @author Simon Brooke <simon@journeyman.cc>
  */
@@ -59,7 +61,7 @@ class Writer extends BufferedWriter {
 	 * @throws IOException
 	 *             if it is impossible to write (e.g. file system full).
 	 */
-	public void generate(WordSequence tokens) throws IOException {
+	public void writeSequence(WordSequence tokens) throws IOException {
 		boolean capitaliseNext = true;
 
 		try {
@@ -113,7 +115,11 @@ class Writer extends BufferedWriter {
 	private boolean spaceBefore(String token) {
 		final boolean result;
 
-		if (token.length() == 1) {
+		switch (token.length()) {
+		case 0:
+			result = false;
+			break;
+		case 1:
 			switch (token.charAt(0)) {
 			case '.':
 			case ',':
@@ -135,8 +141,9 @@ class Writer extends BufferedWriter {
 				result = true;
 				break;
 			}
-		} else {
-			result = false;
+			break;
+		default:
+			result = true;
 		}
 
 		return result;
@@ -155,7 +162,8 @@ class Writer extends BufferedWriter {
 	 *             if Mr this has run out of ink
 	 */
 	private void maybeParagraph(String token) throws IOException {
-		if (token.endsWith(Milkwood.PERIOD) && RANDOM.nextInt(AVSENTENCESPERPARA) == 0) {
+		if (token.endsWith(Milkwood.PERIOD)
+				&& RANDOM.nextInt(AVSENTENCESPERPARA) == 0) {
 			this.write("\n\n");
 		}
 	}

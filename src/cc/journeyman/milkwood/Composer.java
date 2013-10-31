@@ -1,7 +1,7 @@
 package cc.journeyman.milkwood;
 
 import java.util.Collection;
-import java.util.Stack;
+import java.util.Collections;
 
 /**
  * Composes text output based on a rule tree.
@@ -27,23 +27,29 @@ public class Composer {
 	/**
 	 * Recursive, backtracking, output generator.
 	 * 
-	 * @param rules
-	 * @param tupleLength
-	 * @param length
-	 * @return
+	 * @param rules the rule set we're working to.
+	 * @param length the number of tokens still to be output.
+	 * @return if a successful path forward is found, that path, else null.
 	 */
-	public WordSequence compose(RuleTreeNode rules, int tupleLength, int length) {
-		Stack<String> preamble = composePreamble(rules);
+	public WordSequence compose(RuleTreeNode rules, int length) {
+		WordStack preamble = composePreamble(rules);
 		WordSequence result = new WordSequence();
 
 		// composing the preamble will have ended with *ROOT* on top of the
 		// stack;
 		// get rid of it.
 		preamble.pop();
+		
+		if (debug) {
+			System.err.println( "Preamble: " + preamble);
+		}
 
 		result.addAll(preamble);
-
-		result.addAll(this.compose(preamble, rules, rules, tupleLength, length));
+		
+		WordStack body = this.compose(preamble, rules, length);
+		Collections.reverse(body);
+		result.addAll(body);
+		
 		return result;
 	}
 
@@ -51,103 +57,63 @@ public class Composer {
 	 * Recursively attempt to find sequences in the ruleset to append to what's
 	 * been composed so far.
 	 * 
-	 * @param glanceBack
-	 * @param allRules
-	 * @param currentRules
-	 * @param tupleLength
-	 * @param length
-	 * @return
+	 * @param glanceBack the last few words output.
+	 * @param rules the rule set we're working to.
+	 * @param length the number of tokens still to be output.
+	 * @return if a successful path forward is found, that path, else null.
 	 */
-	private WordSequence compose(Stack<String> glanceBack,
-			RuleTreeNode allRules, RuleTreeNode currentRules, int tupleLength,
+	private WordStack compose(WordStack glanceBack, RuleTreeNode rules,
 			int length) {
-		assert (glanceBack.size() == tupleLength) : "Shouldn't happen: bad tuple size";
-		assert (allRules.getWord() == RuleTreeNode.ROOTMAGICTOKEN) : "Shoudn't happen: bad rule set";
-		WordSequence result;
-
-		try {
-			@SuppressWarnings("unchecked")
-			String here = currentRules.getWord((Stack<String>) glanceBack
-					.clone());
-			System.err.println(String.format("Trying token %s", here));
-
-			result = new WordSequence();
-			result.add(here);
-
-			if (length != 0) {
-				/* we're not done yet */
-				Collection<String> options = allRules.getSuccessors();
-
-				for (String next : options) {
-					@SuppressWarnings("unchecked")
-					WordSequence rest = this
-							.tryOption((Stack<String>) glanceBack.clone(),
-									allRules, currentRules.getRule(next),
-									tupleLength, length - 1);
-
-					if (rest != null) {
-						/* we have a solution */
-						result.addAll(rest);
-						break;
-					}
-				}
-			}
-		} catch (NoSuchPathException ex) {
-			if (debug) {
-				System.err.println(String.format("No path %s: Backtracking...",
-						glanceBack));
-			}
-			result = null;
+		final WordStack result;
+		
+		if ( debug) {
+			System.err.println( String.format( "%d: %s", length, glanceBack));
 		}
 
-		return result;
-	}
-
-	/**
-	 * Try composing with this ruleset
-	 * 
-	 * @param glanceBack
-	 * @param allRules
-	 *            all the rules there are.
-	 * @param currentRules
-	 *            the current node in the rule tree.
-	 * @param tupleLength
-	 *            the size of the glanceback window we're considering.
-	 * @param length
-	 * @return
-	 */
-	private WordSequence tryOption(Stack<String> glanceBack,
-			RuleTreeNode allRules, RuleTreeNode currentRules, int tupleLength,
-			int length) {
-		final Stack<String> restack = this.restack(glanceBack,
-				currentRules.getWord());
-		restack.pop();
-		return this.compose(restack, allRules, currentRules, tupleLength,
-				length);
-	}
-
-	/**
-	 * Return a new stack comprising all the items on the current stack, with
-	 * this new string added at the bottom
-	 * 
-	 * @param stack
-	 *            the stack to restack.
-	 * @param bottom
-	 *            the item to place on the bottom.
-	 * @return the restacked stack.
-	 */
-	private Stack<String> restack(Stack<String> stack, String bottom) {
-		final Stack<String> result;
-		if (stack.isEmpty()) {
-			result = new Stack<String>();
-			result.push(bottom);
+		/* are we there yet? */
+		if (length == 0) {
+			result = new WordStack(); 
 		} else {
-			String top = stack.pop();
-			result = restack(stack, bottom);
-			result.push(top);
+			/*
+			 * are there any rules in this ruleset which matches the current
+			 * sliding window? if so, then recurse; if not, then fail.
+			 */
+			Collection<String> words = rules.match(glanceBack.duplicate());
+
+			if (words.isEmpty()) {
+				/* backtrack */
+				result = null;
+			} else {
+				result = tryOptions(words, glanceBack, rules, length);
+			}
 		}
 		return result;
 	}
+	
+	/**
+	 * Try each of these candidates in turn, attempting to recurse.
+	 * @param candidates words which could potentially be added to the output.
+	 * @param glanceBack the last few words output.
+	 * @param allRules the rule set we're working to.
+	 * @param length the number of tokens still to be output.
+	 * @return if a successful path forward is found, that path, else null.
+	 */
+	private WordStack tryOptions(Collection<String> candidates,
+			WordStack glanceBack, RuleTreeNode allRules, int length) {
+		WordStack result = null;
+		
+		for ( String candidate : candidates) {
+			result = compose( new WordStack(glanceBack, candidate), allRules, length - 1);
+			if ( result != null) {
+				/* by Jove, I think she's got it! */
+				result.push(candidate);
+				break;
+			}
+		}
+		
+		return result;
+	}
+
 
 	/**
 	 * Random walk of the rule tree to extract (from the root) a legal sequence
@@ -157,12 +123,12 @@ public class Composer {
 	 *            the rule tree (fragment) to walk.
 	 * @return a sequence of words.
 	 */
-	private Stack<String> composePreamble(RuleTreeNode rules) {
-		final Stack<String> result;
+	private WordStack composePreamble(RuleTreeNode rules) {
+		final WordStack result;
 		final RuleTreeNode successor = rules.getRule();
 
 		if (successor == null) {
-			result = new Stack<String>();
+			result = new WordStack();
 		} else {
 			result = this.composePreamble(successor);
 			result.push(rules.getWord());

@@ -76,4 +76,9 @@ Decluttered the TextGenerator class by moving the whole read stage into two new 
 
 Right, fully decluttered, All bugs(!) are in new class Composer. I have a little Liszt...
 
+Parsing word tuples for n > 2 working sweetly. That is not the problem!
+
+Major refactoring and cleanup of the compose stage...
+
+ye! Utuvienyes
 

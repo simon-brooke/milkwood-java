@@ -31,13 +31,15 @@ public class Milkwood {
 	 * <dl>
 	 * <dt>-d, -debug</dt>
 	 * <dd>Print debugging output to standard error</dd>
-	 * <dt>-i, -input</dt>
+	 * <dt>-i [FILE], -input [FILE]</dt>
 	 * <dd>Input file, expected to be an English (or, frankly, other natural
 	 * language) text. Defaults to standard in.</dd>
-	 * <dt>-n, -tuple-length</dt>
-	 * <dd>The length of tuples into which the file will be analised, default 2.
+	 * <dt>-l [NN], -length [NN]</dt>
+	 * <dd>The length in tuples of the desired output. Defaults to 100.
+	 * <dt>-n [NN], -tuple-length [NN]</dt>
+	 * <dd>The length of tuples into which the file will be analysed, default 2.
 	 * </dd>
-	 * <dt>-o, -output</dt>
+	 * <dt>-o [FILE], -output [FILE]</dt>
 	 * <dd>Output file, to which generated text will be written. Defaults to
 	 * standard out.</dd>
 	 * </dl>
@@ -55,6 +57,7 @@ public class Milkwood {
 		OutputStream out = System.out;
 		int tupleLength = 2;
 		boolean debug = false;
+		int length = 100;
 
 		for (int cursor = 0; cursor < args.length; cursor++) {
 			String arg = args[cursor];
@@ -71,6 +74,9 @@ public class Milkwood {
 				case 'o': // output
 					out = new FileOutputStream(new File(args[++cursor]));
 					break;
+				case 'l': // length
+					length = Integer.parseInt(args[++cursor]);
+					break;
 				case 'n':
 				case 't': // tuple length
 					tupleLength = Integer.parseInt(args[++cursor]);
@@ -82,7 +88,7 @@ public class Milkwood {
 			}
 		}
 		try {
-			new Milkwood().readAndGenerate(in, out, tupleLength, debug);
+			new Milkwood().readAndGenerate(in, out, tupleLength, length, debug);
 		} finally {
 			out.close();
 		}
@@ -97,6 +103,8 @@ public class Milkwood {
 	 *            the output stream to write to.
 	 * @param tupleLength
 	 *            the length of tuples to be used in generation.
+	 * @param length
+	 *            the length in tokens of the output to be generated.
 	 * @param debug
 	 *            whether to print debugging output.
 	 * @throws IOException
@@ -104,14 +112,19 @@ public class Milkwood {
 	 *             scheme of things, very likely.
 	 */
 	void readAndGenerate(final InputStream in, final OutputStream out,
-			final int tupleLength, boolean debug) throws IOException {
+			final int tupleLength, int length, boolean debug)
+			throws IOException {
 		/* The root of the rule tree I shall build. */
 		RuleTreeNode root = new RuleTreeNode();
-		int length = read(in, tupleLength, debug, root);
+		read(in, tupleLength, debug, root);
 
 		WordSequence tokens = compose(tupleLength, debug, root, length);
 
 		write(out, debug, tokens);
+		
+		if ( debug) {
+			System.err.println( "\n\nCompleted.");
+		}
 	}
 
 	/**
@@ -142,8 +155,7 @@ public class Milkwood {
 
 	private WordSequence compose(final int tupleLength, boolean debug,
 			RuleTreeNode root, int length) {
-		WordSequence tokens = new Composer(debug).compose(root, tupleLength,
-				length);
+		WordSequence tokens = new Composer(debug).compose(root, length);
 
 		if (tokens.contains(PERIOD)) {
 			tokens = tokens.truncateAtLastInstance(PERIOD);
@@ -168,7 +180,7 @@ public class Milkwood {
 			WordSequence tokens) throws IOException {
 		Writer scrivenor = new Writer(out, debug);
 		try {
-			scrivenor.generate(tokens);
+			scrivenor.writeSequence(tokens);
 		} finally {
 			scrivenor.close();
 		}

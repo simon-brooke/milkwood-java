@@ -36,6 +36,13 @@ public class Tokeniser extends StreamTokenizer {
 		 */
 		this.whitespaceChars((int) '\"', (int) '\"');
 		this.whitespaceChars((int) '\'', (int) '\'');
+		/*
+		 * treat underscore and hyphen as whitespace as well. Again, hyphen with
+		 * either leading or trailing non-whitespace probably ought to be
+		 * treated specially, but...
+		 */
+		this.whitespaceChars((int) '_', (int) '_');
+		this.whitespaceChars((int) '-', (int) '-');
 		this.wordChars((int) '0', (int) '9');
 		this.wordChars((int) 'A', (int) 'Z');
 		this.wordChars((int) 'a', (int) 'z');
