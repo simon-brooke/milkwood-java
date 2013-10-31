@@ -1,5 +1,7 @@
 Trigrams process
 
+http://codekata.pragprog.com/2007/01/kata_fourteen_t.html
+
 Started at: 20131030:12:48 GMT
 
 OK, it's a tokeniser, with a map. The map maps token tuples onto tokens.
