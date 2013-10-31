@@ -87,7 +87,9 @@ class Writer extends BufferedWriter {
 
         this.maybeParagraph(token);
 
-        return (token.endsWith(Milkwood.PERIOD));
+        return (token.endsWith(Milkwood.PERIOD) || 
+                token.equals("?") || 
+                token.endsWith("!"));
     }
 
     /**
@@ -112,6 +114,10 @@ class Writer extends BufferedWriter {
                     case ',':
                     case ':':
                     case ';':
+                    case '!':
+                    case '?':
+                    case ')':
+                    case ']':
                     case 's':
                     /*
                      * an 's' on its own is probably evidence of a possessive with

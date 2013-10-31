@@ -1,6 +1,7 @@
 package cc.journeyman.milkwood;
 
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Composes text output based on a rule tree.
@@ -43,7 +44,9 @@ public class Composer {
             System.err.println("Preamble: " + preamble);
         }
 
-        result.addAll(preamble);
+        Window copy = preamble.duplicate();
+        Collections.reverse(copy);
+        result.addAll(copy);
 
         result.addAll(this.compose(preamble, rules, length));
 
