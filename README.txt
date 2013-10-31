@@ -70,3 +70,7 @@ Having said all that, the parse tree is looking very good. I'm extracting the ru
 
 Right, StreamTokenizer was a poor choice. It seems to be legacy. But schlurping the whole text into a string and then using StringTokenizer or String.split() looks a bad choice too, since I don't know how long the string is. H'mmmm... This is a problem I kind of don't need, since it's not key to the project, and the .endsWith(PERIOD) hack works around it. Concentate on output.
 
+New Git repository, and this time pushed out to Goldsmith, so that local power problems shouldn't affect it...
+
+Decluttered the TextGenerator class by moving the whole read stage into two new classes, Generator and Tokeniser. More declutter needed.
+
